@@ -24,7 +24,7 @@ elif allow_sqlite_fallback:
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 else:
     raise RuntimeError(
-        "DATABASE_URL nao configurada. Use Postgres ou MySQL. "
+        "DATABASE_URL não configurada. Use Postgres ou MySQL. "
         "Para desenvolvimento local, defina ALLOW_SQLITE_FALLBACK=true."
     )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False

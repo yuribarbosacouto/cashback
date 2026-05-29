@@ -187,8 +187,8 @@
         </section>
 
         <section class="card">
-            <h2>Historico de consultas do seu IP</h2>
-            <p>As consultas realizadas neste acesso aparecem no historico abaixo.</p>
+            <h2>Histórico de consultas do seu IP</h2>
+            <p>As consultas realizadas neste acesso aparecem no histórico abaixo.</p>
 
             <div class="empty" id="historico-vazio">Nenhuma consulta registrada ainda.</div>
             <table id="historico">
@@ -247,7 +247,7 @@
                 const data = await resp.json();
 
                 if (!resp.ok) {
-                    erroEl.textContent = data.erro || "Nao foi possivel calcular o cashback.";
+                    erroEl.textContent = data.erro || "Não foi possível calcular o cashback.";
                     return;
                 }
 
@@ -291,7 +291,7 @@
                     row.insertCell(3).innerText = item.timestamp;
                 }
             } catch (error) {
-                console.error("Erro ao carregar historico:", error);
+                console.error("Erro ao carregar histórico:", error);
 
                 if (tentativas > 1) {
                     await delay(1200);
