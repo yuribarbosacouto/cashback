@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cashback Nology</title>
+    <title>Cashback Rules Engine</title>
     <style>
         :root {
-            --bg: #f7f1e8;
-            --panel: #fffaf3;
-            --text: #1d1d1b;
-            --accent: #17624a;
-            --accent-dark: #0d3d2d;
-            --line: #dbcdb9;
-            --muted: #6d655c;
+            --bg: #f4f7fb;
+            --panel: #ffffff;
+            --text: #172033;
+            --muted: #64748b;
+            --accent: #047857;
+            --accent-dark: #064e3b;
+            --line: #d9e2ec;
+            --danger: #9f1239;
         }
 
         * {
@@ -21,32 +22,65 @@
 
         body {
             margin: 0;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background:
-                radial-gradient(circle at top left, rgba(23, 98, 74, 0.15), transparent 28%),
-                linear-gradient(180deg, #f6efe5 0%, var(--bg) 100%);
-            color: var(--text);
             min-height: 100vh;
-            padding: 32px 16px;
+            padding: 24px 16px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Segoe UI", Arial, sans-serif;
         }
 
         .container {
-            max-width: 920px;
+            max-width: 1120px;
             margin: 0 auto;
             display: grid;
-            gap: 24px;
+            gap: 16px;
+        }
+
+        .hero {
+            display: grid;
+            gap: 10px;
+            padding: 24px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #0f172a;
+            color: #ffffff;
+        }
+
+        .hero p {
+            max-width: 760px;
+            color: #cbd5e1;
+        }
+
+        .grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .two {
+            grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
         }
 
         .card {
             background: var(--panel);
             border: 1px solid var(--line);
-            border-radius: 18px;
-            padding: 24px;
-            box-shadow: 0 14px 34px rgba(29, 29, 27, 0.08);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
         }
 
-        h1, h2 {
+        h1, h2, h3, p {
             margin-top: 0;
+        }
+
+        h1 {
+            margin-bottom: 0;
+            font-size: clamp(2rem, 4vw, 3.2rem);
+            line-height: 1.05;
+        }
+
+        h2 {
+            margin-bottom: 8px;
+            font-size: 1.08rem;
         }
 
         p {
@@ -54,156 +88,242 @@
             line-height: 1.5;
         }
 
-        .form-grid {
+        .hero p {
+            margin-bottom: 0;
+        }
+
+        .form-grid,
+        .metrics {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
         }
 
         label {
             display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            font-weight: 700;
         }
 
-        input, select, button {
+        input,
+        select,
+        button {
             width: 100%;
-            padding: 12px 14px;
-            border-radius: 12px;
-            border: 1px solid var(--line);
+            min-height: 42px;
+            border-radius: 8px;
             font: inherit;
         }
 
-        input:focus, select:focus {
-            outline: 2px solid rgba(23, 98, 74, 0.2);
-            border-color: var(--accent);
+        input,
+        select {
+            border: 1px solid var(--line);
+            padding: 10px 12px;
+            color: var(--text);
+            background: #ffffff;
+        }
+
+        input:focus,
+        select:focus,
+        button:focus-visible {
+            outline: 3px solid rgba(4, 120, 87, 0.22);
+            outline-offset: 2px;
         }
 
         button {
-            border: none;
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            border: 0;
+            padding: 10px 14px;
+            background: var(--accent);
             color: white;
-            font-weight: 700;
+            font-weight: 800;
             cursor: pointer;
-            margin-top: 8px;
         }
 
         button:hover {
-            filter: brightness(1.03);
+            background: var(--accent-dark);
+        }
+
+        .secondary {
+            background: #172033;
+        }
+
+        .secondary:hover {
+            background: #0f172a;
         }
 
         .result {
-            margin-top: 20px;
-            padding: 18px;
-            border-radius: 14px;
-            background: rgba(23, 98, 74, 0.08);
-            border: 1px solid rgba(23, 98, 74, 0.18);
             display: none;
+            margin-top: 16px;
+            padding: 14px;
+            border: 1px solid rgba(4, 120, 87, 0.22);
+            border-radius: 8px;
+            background: #ecfdf5;
         }
 
-        .result strong {
+        .result strong,
+        .metric strong {
             display: block;
-            font-size: 1.4rem;
             color: var(--accent-dark);
-            margin-bottom: 8px;
+            font-size: 1.35rem;
         }
 
         .error {
-            margin-top: 16px;
-            color: #9f1e1e;
-            font-weight: 600;
-            min-height: 24px;
+            min-height: 22px;
+            margin-top: 12px;
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        .metric {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 12px;
+            background: #f8fafc;
+        }
+
+        .metric span {
+            color: var(--muted);
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
         }
 
         table {
             width: 100%;
+            min-width: 620px;
             border-collapse: collapse;
-            margin-top: 16px;
-            overflow: hidden;
+            margin-top: 12px;
+            font-size: 0.92rem;
         }
 
-        th, td {
-            padding: 12px;
+        th,
+        td {
+            padding: 11px;
             border-bottom: 1px solid var(--line);
             text-align: left;
+            vertical-align: top;
         }
 
         th {
-            color: var(--accent-dark);
-            background: rgba(23, 98, 74, 0.06);
+            background: #f1f5f9;
+            color: #0f172a;
+            font-size: 0.8rem;
+            text-transform: uppercase;
         }
 
         .empty {
+            margin-top: 10px;
             color: var(--muted);
-            margin-top: 12px;
         }
 
-        @media (max-width: 640px) {
+        @media (max-width: 860px) {
+            .two {
+                grid-template-columns: 1fr;
+            }
+
             body {
                 padding: 16px 12px;
-            }
-
-            .card {
-                padding: 18px;
-            }
-
-            th, td {
-                font-size: 0.92rem;
-                padding: 10px 8px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <main class="container">
+        <section class="hero">
+            <h1>Cashback Rules Engine</h1>
+            <p>Simulador de regras comerciais com API Flask, persistência, histórico por IP, relatório do acesso e laboratório de cenários.</p>
+        </section>
+
+        <section class="grid two">
+            <article class="card">
+                <h2>Calcular cashback</h2>
+                <p>Informe o tipo de cliente, valor da compra e desconto aplicado.</p>
+
+                <div class="form-grid">
+                    <div>
+                        <label for="tipo">Tipo de cliente</label>
+                        <select id="tipo">
+                            <option value="NORMAL">Normal</option>
+                            <option value="VIP">VIP</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="valor">Valor da compra (R$)</label>
+                        <input type="number" id="valor" step="0.01" min="0.01" placeholder="600.00">
+                    </div>
+                    <div>
+                        <label for="desconto">Desconto (%)</label>
+                        <input type="number" id="desconto" step="0.01" min="0" max="100" value="0">
+                    </div>
+                </div>
+
+                <button id="calcular-btn" type="button">Calcular</button>
+                <div class="error" id="erro"></div>
+
+                <div class="result" id="resultado">
+                    <strong id="cashback-final"></strong>
+                    <div id="resumo-calculo"></div>
+                </div>
+            </article>
+
+            <article class="card">
+                <h2>Relatório do acesso</h2>
+                <p>Indicadores calculados sobre as consultas registradas para este IP.</p>
+                <div class="metrics">
+                    <div class="metric"><span>Consultas</span><strong id="metric-consultas">0</strong></div>
+                    <div class="metric"><span>Cashback total</span><strong id="metric-cashback">R$ 0,00</strong></div>
+                    <div class="metric"><span>Ticket médio</span><strong id="metric-ticket">R$ 0,00</strong></div>
+                    <div class="metric"><span>Clientes VIP</span><strong id="metric-vip">0</strong></div>
+                </div>
+            </article>
+        </section>
+
         <section class="card">
-            <h1>Calculadora de Cashback</h1>
-            <p>Informe o tipo de cliente e o valor da compra para consultar o cashback.</p>
-
-            <div class="form-grid">
+            <div class="grid two">
                 <div>
-                    <label for="tipo">Tipo de cliente</label>
-                    <select id="tipo">
-                        <option value="NORMAL">Normal</option>
-                        <option value="VIP">VIP</option>
-                    </select>
+                    <h2>Laboratório de regras</h2>
+                    <p>Execute cenários padronizados para comparar cliente normal, VIP, descontos e ticket alto.</p>
                 </div>
-
-                <div>
-                    <label for="valor">Valor da compra (R$)</label>
-                    <input type="number" id="valor" step="0.01" min="0.01" placeholder="Ex: 600.00">
-                </div>
-
+                <button class="secondary" id="simular-btn" type="button">Simular cenários</button>
             </div>
-
-            <button id="calcular-btn" type="button">Calcular cashback</button>
-            <div class="error" id="erro"></div>
-
-            <div class="result" id="resultado">
-                <strong id="cashback-final"></strong>
-                <div id="resumo-calculo"></div>
+            <div class="table-wrap">
+                <table id="cenarios">
+                    <thead>
+                        <tr>
+                            <th>Cenário</th>
+                            <th>Tipo</th>
+                            <th>Valor final</th>
+                            <th>Cashback</th>
+                            <th>Desconto</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </section>
 
         <section class="card">
             <h2>Histórico de consultas do seu IP</h2>
             <p>As consultas realizadas neste acesso aparecem no histórico abaixo.</p>
-
             <div class="empty" id="historico-vazio">Nenhuma consulta registrada ainda.</div>
-            <table id="historico">
-                <thead>
-                    <tr>
-                        <th>Tipo</th>
-                        <th>Valor</th>
-                        <th>Cashback</th>
-                        <th>Data/Hora</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="table-wrap">
+                <table id="historico">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Valor</th>
+                            <th>Cashback</th>
+                            <th>Data/Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </section>
-    </div>
+    </main>
 
     <script>
         function formatCurrency(value) {
@@ -217,9 +337,17 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
+        function renderRow(tbody, values) {
+            const row = tbody.insertRow();
+            for (const value of values) {
+                row.insertCell().innerText = value;
+            }
+        }
+
         async function calcular() {
             const tipo = document.getElementById("tipo").value;
             const valor = parseFloat(document.getElementById("valor").value);
+            const desconto = parseFloat(document.getElementById("desconto").value || "0");
             const erroEl = document.getElementById("erro");
             const resultadoEl = document.getElementById("resultado");
 
@@ -231,16 +359,19 @@
                 return;
             }
 
+            if (Number.isNaN(desconto) || desconto < 0 || desconto > 100) {
+                erroEl.textContent = "O desconto deve estar entre 0 e 100.";
+                return;
+            }
+
             try {
                 const resp = await fetch("/api/calcular", {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         tipo_cliente: tipo,
                         valor: valor,
-                        desconto_percentual: 0
+                        desconto_percentual: desconto
                     })
                 });
 
@@ -253,12 +384,12 @@
 
                 document.getElementById("cashback-final").textContent =
                     `Cashback final: ${formatCurrency(data.cashback)}`;
-
                 document.getElementById("resumo-calculo").textContent =
-                    `Consulta realizada para ${data.tipo_cliente} com compra de ${formatCurrency(data.valor_original)}.`;
+                    `${data.tipo_cliente} · valor final ${formatCurrency(data.valor_final)} · desconto ${data.desconto_percentual}%`;
 
                 resultadoEl.style.display = "block";
                 carregarHistorico();
+                carregarRelatorio();
             } catch (error) {
                 console.error("Erro:", error);
                 erroEl.textContent = "Erro ao conectar com o servidor.";
@@ -267,11 +398,8 @@
 
         async function carregarHistorico(tentativas = 3) {
             try {
-                const resp = await fetch(`/api/historico?ts=${Date.now()}`, {
-                    cache: "no-store"
-                });
+                const resp = await fetch(`/api/historico?ts=${Date.now()}`, { cache: "no-store" });
                 const dados = await resp.json();
-
                 const tbody = document.querySelector("#historico tbody");
                 const vazio = document.getElementById("historico-vazio");
                 tbody.innerHTML = "";
@@ -282,17 +410,16 @@
                 }
 
                 vazio.style.display = "none";
-
                 for (const item of dados) {
-                    const row = tbody.insertRow();
-                    row.insertCell(0).innerText = item.tipo_cliente;
-                    row.insertCell(1).innerText = formatCurrency(item.valor_original);
-                    row.insertCell(2).innerText = formatCurrency(item.cashback);
-                    row.insertCell(3).innerText = item.timestamp;
+                    renderRow(tbody, [
+                        item.tipo_cliente,
+                        formatCurrency(item.valor_original),
+                        formatCurrency(item.cashback),
+                        item.timestamp
+                    ]);
                 }
             } catch (error) {
                 console.error("Erro ao carregar histórico:", error);
-
                 if (tentativas > 1) {
                     await delay(1200);
                     return carregarHistorico(tentativas - 1);
@@ -300,14 +427,52 @@
             }
         }
 
-        document.getElementById("calcular-btn").addEventListener("click", calcular);
-        window.addEventListener("pageshow", () => carregarHistorico());
-        document.addEventListener("visibilitychange", () => {
-            if (document.visibilityState === "visible") {
-                carregarHistorico();
+        async function carregarRelatorio() {
+            try {
+                const resp = await fetch(`/api/relatorio?ts=${Date.now()}`, { cache: "no-store" });
+                const data = await resp.json();
+                document.getElementById("metric-consultas").textContent = data.total_consultas;
+                document.getElementById("metric-cashback").textContent = formatCurrency(data.cashback_total);
+                document.getElementById("metric-ticket").textContent = formatCurrency(data.ticket_medio);
+                document.getElementById("metric-vip").textContent = data.por_tipo?.VIP ?? 0;
+            } catch (error) {
+                console.error("Erro ao carregar relatório:", error);
             }
+        }
+
+        async function simularCenarios() {
+            const tbody = document.querySelector("#cenarios tbody");
+            tbody.innerHTML = "";
+
+            try {
+                const resp = await fetch("/api/simular", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({})
+                });
+                const data = await resp.json();
+
+                for (const item of data.cenarios || []) {
+                    renderRow(tbody, [
+                        item.nome,
+                        item.tipo_cliente,
+                        formatCurrency(item.valor_final),
+                        formatCurrency(item.cashback),
+                        `${item.desconto_percentual}%`
+                    ]);
+                }
+            } catch (error) {
+                console.error("Erro ao simular cenários:", error);
+            }
+        }
+
+        document.getElementById("calcular-btn").addEventListener("click", calcular);
+        document.getElementById("simular-btn").addEventListener("click", simularCenarios);
+        window.addEventListener("pageshow", () => {
+            carregarHistorico();
+            carregarRelatorio();
+            simularCenarios();
         });
-        carregarHistorico();
     </script>
 </body>
 </html>

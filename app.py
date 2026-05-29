@@ -33,6 +33,12 @@ db = SQLAlchemy(app)
 TIPOS_CLIENTE_VALIDOS = {"NORMAL", "VIP"}
 CENT = Decimal("0.01")
 APP_TIMEZONE = ZoneInfo(os.getenv("APP_TIMEZONE", "America/Sao_Paulo"))
+DEFAULT_SCENARIOS = [
+    {"nome": "Compra comum", "tipo_cliente": "NORMAL", "valor": 120, "desconto_percentual": 0},
+    {"nome": "Cliente VIP", "tipo_cliente": "VIP", "valor": 280, "desconto_percentual": 5},
+    {"nome": "Ticket alto", "tipo_cliente": "NORMAL", "valor": 650, "desconto_percentual": 0},
+    {"nome": "VIP com ticket alto", "tipo_cliente": "VIP", "valor": 800, "desconto_percentual": 10},
+]
 
 
 def utc_now_naive():
@@ -128,6 +134,16 @@ def calcular_cashback(tipo_cliente, valor_original, desconto_percentual):
     }
 
 
+def serialize_result(resultado):
+    return {
+        "tipo_cliente": resultado["tipo_cliente"],
+        "valor_original": float(resultado["valor_original"]),
+        "desconto_percentual": float(resultado["desconto_percentual"]),
+        "valor_final": float(resultado["valor_final"]),
+        "cashback": float(resultado["cashback"]),
+    }
+
+
 @app.route("/")
 def index():
     return app.send_static_file("index.html")
@@ -158,13 +174,7 @@ def api_calcular():
         db.session.commit()
 
         return api_response(
-            {
-                "tipo_cliente": resultado["tipo_cliente"],
-                "valor_original": float(resultado["valor_original"]),
-                "desconto_percentual": float(resultado["desconto_percentual"]),
-                "valor_final": float(resultado["valor_final"]),
-                "cashback": float(resultado["cashback"]),
-            }
+            serialize_result(resultado)
         )
     except ValueError as exc:
         return api_response({"erro": str(exc)}, 400)
@@ -182,6 +192,65 @@ def api_historico():
         .all()
     )
     return api_response([consulta.to_dict() for consulta in consultas])
+
+
+@app.route("/api/simular", methods=["POST"])
+def api_simular():
+    try:
+        data = request.get_json(silent=True) or {}
+        cenarios = data.get("cenarios", DEFAULT_SCENARIOS)
+
+        if not isinstance(cenarios, list) or len(cenarios) == 0:
+            return api_response({"erro": "Envie uma lista de cenários"}, 400)
+
+        resultados = []
+        for index, cenario in enumerate(cenarios[:12], start=1):
+            if not isinstance(cenario, dict):
+                return api_response({"erro": f"Cenário {index} inválido"}, 400)
+
+            resultado = calcular_cashback(
+                cenario.get("tipo_cliente"),
+                cenario.get("valor"),
+                cenario.get("desconto_percentual", 0),
+            )
+            resultados.append({
+                "nome": cenario.get("nome") or f"Cenário {index}",
+                **serialize_result(resultado),
+            })
+
+        maior_cashback = max(resultados, key=lambda item: item["cashback"])
+        return api_response({
+            "total_cenarios": len(resultados),
+            "maior_cashback": maior_cashback,
+            "cenarios": resultados,
+        })
+    except ValueError as exc:
+        return api_response({"erro": str(exc)}, 400)
+    except Exception as exc:
+        app.logger.exception("Erro ao simular cenários: %s", exc)
+        return api_response({"erro": "Erro interno"}, 500)
+
+
+@app.route("/api/relatorio", methods=["GET"])
+def api_relatorio():
+    ip = get_request_ip()
+    consultas = Consulta.query.filter_by(ip=ip).all()
+    total_cashback = sum((Decimal(consulta.cashback) for consulta in consultas), Decimal("0"))
+    total_valor_final = sum((Decimal(consulta.valor_final) for consulta in consultas), Decimal("0"))
+    por_tipo = {"NORMAL": 0, "VIP": 0}
+
+    for consulta in consultas:
+        por_tipo[consulta.tipo_cliente] = por_tipo.get(consulta.tipo_cliente, 0) + 1
+
+    ticket_medio = total_valor_final / len(consultas) if consultas else Decimal("0")
+
+    return api_response({
+        "total_consultas": len(consultas),
+        "cashback_total": float(round_money(total_cashback)),
+        "valor_final_total": float(round_money(total_valor_final)),
+        "ticket_medio": float(round_money(ticket_medio)),
+        "por_tipo": por_tipo,
+    })
 
 
 if __name__ == "__main__":

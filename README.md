@@ -1,15 +1,22 @@
 # Cashback Nology
 
-Aplicação Flask com frontend estático para calcular cashback, registrar histórico por IP e demonstrar regras de negócio em uma API simples.
+![CI](https://github.com/yuribarbosa384-bot/cashback-nology/actions/workflows/ci.yml/badge.svg)
+![CodeQL](https://github.com/yuribarbosa384-bot/cashback-nology/actions/workflows/codeql.yml/badge.svg)
+
+Motor de regras em Flask para calcular cashback, registrar histórico por IP, simular cenários comerciais e gerar relatório do acesso.
+
+![Tela do Cashback Rules Engine](docs/screenshots/cashback-home.png)
 
 ## Problema
 
-Uma operação comercial precisa simular cashback considerando tipo de cliente, valor da compra e regras promocionais. O projeto centraliza esse cálculo em uma API e mantém o histórico das consultas feitas pelo usuário.
+Uma operação comercial precisa simular cashback considerando tipo de cliente, valor da compra, descontos e regras promocionais. O projeto centraliza esse cálculo em uma API, mantém histórico por IP e oferece um laboratório de cenários para comparar regras.
 
 ## Funcionalidades
 
 - Cálculo de cashback para cliente normal e VIP
 - Histórico de consultas por IP
+- Laboratório de regras com cenários padronizados
+- Relatório com total de consultas, cashback acumulado, ticket médio e clientes VIP
 - API Flask com respostas JSON
 - Persistência com SQLAlchemy
 - Suporte a Postgres, MySQL ou SQLite em desenvolvimento
@@ -27,7 +34,9 @@ Uma operação comercial precisa simular cashback considerando tipo de cliente, 
 ```text
 GET   /
 POST  /api/calcular
+POST  /api/simular
 GET   /api/historico
+GET   /api/relatorio
 ```
 
 Exemplo de payload:
@@ -66,3 +75,21 @@ http://127.0.0.1:5000
 ```
 
 Para rodar com banco externo, defina `DATABASE_URL` com Postgres ou MySQL.
+
+## Qualidade
+
+```powershell
+python -m py_compile app.py
+python -m unittest discover -s tests
+```
+
+- CI com compilação e testes de API
+- CodeQL para análise estática de Python
+- Dependabot para pip e GitHub Actions
+- Dependency Review em pull requests
+
+## Próximas evoluções
+
+- Demo pública estável
+- Tela administrativa com gráficos por campanha/origem
+- Documentação OpenAPI
