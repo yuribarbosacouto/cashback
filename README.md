@@ -92,4 +92,4 @@ python -m unittest discover -s tests
 
 - Demo pública estável
 - Tela administrativa com gráficos por campanha/origem
-- Documentação OpenAPI
+- Documentação OpenAPIOpenAPI
