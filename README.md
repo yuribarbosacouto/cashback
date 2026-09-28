@@ -19,7 +19,7 @@ Uma operação comercial precisa simular cashback considerando tipo de cliente, 
 - Relatório com total de consultas, cashback acumulado, ticket médio e clientes VIP
 - API Flask com respostas JSON
 - Persistência com SQLAlchemy
-- Suporte a Postgres, MySQL ou SQLite em desenvolvimento
+- Configuração para Postgres ou MySQL via `DATABASE_URL`; SQLite para desenvolvimento e testes
 - Frontend estático com formulário e tabela de histórico
 
 ## Regras de negócio
@@ -74,7 +74,7 @@ Depois acesse:
 http://127.0.0.1:5000
 ```
 
-Para rodar com banco externo, defina `DATABASE_URL` com Postgres ou MySQL.
+Para rodar com banco externo, defina `DATABASE_URL` com Postgres ou MySQL. Os testes automatizados atuais usam SQLite em memória.
 
 ## Qualidade
 
