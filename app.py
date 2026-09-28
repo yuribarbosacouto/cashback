@@ -209,9 +209,11 @@ def api_simular():
 
         if not isinstance(cenarios, list) or len(cenarios) == 0:
             return api_response({"erro": "Envie uma lista de cenários"}, 400)
+        if len(cenarios) > 12:
+            return api_response({"erro": "Envie no máximo 12 cenários"}, 400)
 
         resultados = []
-        for index, cenario in enumerate(cenarios[:12], start=1):
+        for index, cenario in enumerate(cenarios, start=1):
             if not isinstance(cenario, dict):
                 return api_response({"erro": f"Cenário {index} inválido"}, 400)
 
