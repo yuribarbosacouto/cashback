@@ -19,7 +19,7 @@ updates:
       interval: weekly
       day: monday
       time: "10:30"
-    timezone: America/Sao_Paulo
+      timezone: America/Sao_Paulo
     open-pull-requests-limit: 5
     groups:
       github-actions:
