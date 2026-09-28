@@ -46,6 +46,27 @@ class CashbackTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("erro", response.get_json())
 
+    def test_api_rejeita_nan(self):
+        response = self.client.post(
+            "/api/calcular",
+            json={"tipo_cliente": "VIP", "valor": "NaN"},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.get_json()["erro"], "Valor numerico invalido")
+
+    def test_limite_500_nao_dobra_e_500_01_dobra(self):
+        resultado = calcular_cashback("NORMAL", 500, 0)
+        self.assertEqual(resultado["cashback"], Decimal("25.00"))
+
+        resultado = calcular_cashback("NORMAL", "500.01", 0)
+        self.assertEqual(resultado["cashback"], Decimal("50.00"))
+
+    def test_desconto_total_zera_cashback(self):
+        resultado = calcular_cashback("VIP", 100, 100)
+        self.assertEqual(resultado["valor_final"], Decimal("0.00"))
+        self.assertEqual(resultado["cashback"], Decimal("0.00"))
+
     def test_api_simula_cenarios_de_regras(self):
         response = self.client.post("/api/simular", json={})
 
