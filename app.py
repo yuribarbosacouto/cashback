@@ -19,6 +19,8 @@ if database_url:
         database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
     elif database_url.startswith("postgresql://"):
         database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    elif database_url.startswith("mysql://"):
+        database_url = database_url.replace("mysql://", "mysql+pymysql://", 1)
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 elif allow_sqlite_fallback:
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
@@ -82,9 +84,14 @@ def round_money(value):
 
 def to_decimal(value):
     try:
-        return Decimal(str(value))
+        decimal_value = Decimal(str(value))
     except (InvalidOperation, TypeError, ValueError):
         raise ValueError("Valor numerico invalido")
+
+    if not decimal_value.is_finite():
+        raise ValueError("Valor numerico invalido")
+
+    return decimal_value
 
 
 def get_request_ip():
@@ -234,18 +241,44 @@ def api_simular():
 @app.route("/api/relatorio", methods=["GET"])
 def api_relatorio():
     ip = get_request_ip()
-    consultas = Consulta.query.filter_by(ip=ip).all()
-    total_cashback = sum((Decimal(consulta.cashback) for consulta in consultas), Decimal("0"))
-    total_valor_final = sum((Decimal(consulta.valor_final) for consulta in consultas), Decimal("0"))
+
+    total_consultas = (
+        db.session.query(db.func.count(Consulta.id))
+        .filter_by(ip=ip)
+        .scalar()
+        or 0
+    )
+    total_cashback_raw = (
+        db.session.query(db.func.sum(Consulta.cashback))
+        .filter_by(ip=ip)
+        .scalar()
+    )
+    total_valor_final_raw = (
+        db.session.query(db.func.sum(Consulta.valor_final))
+        .filter_by(ip=ip)
+        .scalar()
+    )
+    ticket_medio_raw = (
+        db.session.query(db.func.avg(Consulta.valor_final))
+        .filter_by(ip=ip)
+        .scalar()
+    )
+
+    total_cashback = Decimal(str(total_cashback_raw or 0))
+    total_valor_final = Decimal(str(total_valor_final_raw or 0))
+    ticket_medio = Decimal(str(ticket_medio_raw or 0))
+
     por_tipo = {"NORMAL": 0, "VIP": 0}
-
-    for consulta in consultas:
-        por_tipo[consulta.tipo_cliente] = por_tipo.get(consulta.tipo_cliente, 0) + 1
-
-    ticket_medio = total_valor_final / len(consultas) if consultas else Decimal("0")
+    for tipo_cliente, quantidade in (
+        db.session.query(Consulta.tipo_cliente, db.func.count(Consulta.id))
+        .filter_by(ip=ip)
+        .group_by(Consulta.tipo_cliente)
+        .all()
+    ):
+        por_tipo[tipo_cliente] = quantidade
 
     return api_response({
-        "total_consultas": len(consultas),
+        "total_consultas": total_consultas,
         "cashback_total": float(round_money(total_cashback)),
         "valor_final_total": float(round_money(total_valor_final)),
         "ticket_medio": float(round_money(ticket_medio)),
