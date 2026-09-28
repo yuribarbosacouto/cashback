@@ -1,4 +1,4 @@
-# Cashback Nology
+# Cashback Rules Engine
 
 ![CI](https://github.com/yuribarbosa384-bot/cashback-nology/actions/workflows/ci.yml/badge.svg)
 ![CodeQL](https://github.com/yuribarbosa384-bot/cashback-nology/actions/workflows/codeql.yml/badge.svg)
