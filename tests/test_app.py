@@ -75,6 +75,15 @@ class CashbackTestCase(unittest.TestCase):
         self.assertGreaterEqual(data["total_cenarios"], 4)
         self.assertIn("maior_cashback", data)
 
+    def test_api_rejeita_mais_de_12_cenarios(self):
+        response = self.client.post(
+            "/api/simular",
+            json={"cenarios": [{}] * 13},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.get_json()["erro"], "Envie no máximo 12 cenários")
+
     def test_api_relatorio_resume_consultas_do_ip(self):
         self.client.post(
             "/api/calcular",
