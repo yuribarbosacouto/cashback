@@ -46,14 +46,15 @@ class CashbackTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("erro", response.get_json())
 
-    def test_api_rejeita_nan(self):
-        response = self.client.post(
-            "/api/calcular",
-            json={"tipo_cliente": "VIP", "valor": "NaN"},
-        )
+    def test_api_rejeita_nan_e_infinito(self):
+        for valor in ("NaN", "Infinity", "-Infinity"):
+            response = self.client.post(
+                "/api/calcular",
+                json={"tipo_cliente": "VIP", "valor": valor},
+            )
 
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.get_json()["erro"], "Valor numerico invalido")
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.get_json()["erro"], "Valor numerico invalido")
 
     def test_limite_500_nao_dobra_e_500_01_dobra(self):
         resultado = calcular_cashback("NORMAL", 500, 0)
@@ -74,6 +75,26 @@ class CashbackTestCase(unittest.TestCase):
         data = response.get_json()
         self.assertGreaterEqual(data["total_cenarios"], 4)
         self.assertIn("maior_cashback", data)
+
+    def test_api_rejeita_valor_acima_do_limite_do_banco(self):
+        response = self.client.post(
+            "/api/calcular",
+            json={"tipo_cliente": "NORMAL", "valor": "100000000", "desconto_percentual": 0},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.get_json()["erro"], "O valor da compra excede o limite permitido")
+
+    def test_erro_nao_registra_historico(self):
+        response = self.client.post(
+            "/api/calcular",
+            json={"tipo_cliente": "NORMAL", "valor": -10, "desconto_percentual": 0},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        history = self.client.get("/api/historico")
+        self.assertEqual(history.status_code, 200)
+        self.assertEqual(history.get_json(), [])
 
     def test_api_rejeita_mais_de_12_cenarios(self):
         response = self.client.post(
