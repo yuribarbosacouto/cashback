@@ -34,6 +34,7 @@ db = SQLAlchemy(app)
 
 TIPOS_CLIENTE_VALIDOS = {"NORMAL", "VIP"}
 CENT = Decimal("0.01")
+MAX_VALOR_ORIGINAL = Decimal("99999999.99")
 APP_TIMEZONE = ZoneInfo(os.getenv("APP_TIMEZONE", "America/Sao_Paulo"))
 DEFAULT_SCENARIOS = [
     {"nome": "Compra comum", "tipo_cliente": "NORMAL", "valor": 120, "desconto_percentual": 0},
@@ -117,6 +118,8 @@ def calcular_cashback(tipo_cliente, valor_original, desconto_percentual):
 
     if valor_original <= 0:
         raise ValueError("O valor da compra deve ser maior que zero")
+    if valor_original > MAX_VALOR_ORIGINAL:
+        raise ValueError("O valor da compra excede o limite permitido")
     if desconto_percentual < 0 or desconto_percentual > 100:
         raise ValueError("O desconto deve estar entre 0 e 100")
 
