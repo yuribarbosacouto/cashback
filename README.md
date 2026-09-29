@@ -1,7 +1,7 @@
 # Cashback Rules Engine
 
-![CI](https://github.com/yuribarbosa384-bot/cashback-nology/actions/workflows/ci.yml/badge.svg)
-![CodeQL](https://github.com/yuribarbosa384-bot/cashback-nology/actions/workflows/codeql.yml/badge.svg)
+![CI](https://github.com/yuribarbosacouto/cashback/actions/workflows/ci.yml/badge.svg)
+![CodeQL](https://github.com/yuribarbosacouto/cashback/actions/workflows/codeql.yml/badge.svg)
 
 Motor de regras em Flask para calcular cashback, registrar histórico por IP, simular cenários comerciais e gerar relatório do acesso.
 
@@ -19,7 +19,7 @@ Uma operação comercial precisa simular cashback considerando tipo de cliente, 
 - Relatório com total de consultas, cashback acumulado, ticket médio e clientes VIP
 - API Flask com respostas JSON
 - Persistência com SQLAlchemy
-- Configuração para Postgres ou MySQL via `DATABASE_URL`; SQLite para desenvolvimento e testes
+- Banco PostgreSQL ou MySQL via `DATABASE_URL`; SQLite somente para desenvolvimento local e testes
 - Frontend estático com formulário e tabela de histórico
 
 ## Regras de negócio
@@ -55,8 +55,8 @@ Exemplo de payload:
 - Flask
 - Flask-SQLAlchemy
 - HTML, CSS e JavaScript
-- SQLite para desenvolvimento local
-- Postgres ou MySQL via `DATABASE_URL`
+- SQLite para desenvolvimento local e testes
+- PostgreSQL ou MySQL via `DATABASE_URL`
 
 ## Rodar localmente
 
