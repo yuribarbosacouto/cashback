@@ -1,15 +1,22 @@
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from datetime import datetime, timezone
 import os
+from ipaddress import ip_address
 from zoneinfo import ZoneInfo
 
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+app.config["MAX_CONTENT_LENGTH"] = 32 * 1024
+trusted_proxy_hops = int(os.getenv("TRUSTED_PROXY_HOPS", "0"))
+if trusted_proxy_hops < 0:
+    raise ValueError("TRUSTED_PROXY_HOPS deve ser um inteiro não negativo")
+if trusted_proxy_hops:
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=trusted_proxy_hops)
 
 database_url = os.getenv("DATABASE_URL")
 allow_sqlite_fallback = os.getenv("ALLOW_SQLITE_FALLBACK", "false").lower() == "true"
@@ -96,7 +103,10 @@ def to_decimal(value):
 
 
 def get_request_ip():
-    return request.remote_addr or "desconhecido"
+    try:
+        return str(ip_address(request.remote_addr))
+    except ValueError:
+        return "desconhecido"
 
 
 def api_response(payload, status=200):
@@ -154,6 +164,11 @@ def serialize_result(resultado):
     }
 
 
+@app.errorhandler(RequestEntityTooLarge)
+def payload_too_large(_error):
+    return api_response({"erro": "Corpo da requisição excede 32 KiB"}, 413)
+
+
 @app.route("/")
 def index():
     return app.send_static_file("index.html")
@@ -186,9 +201,12 @@ def api_calcular():
         return api_response(
             serialize_result(resultado)
         )
+    except RequestEntityTooLarge:
+        raise
     except ValueError as exc:
         return api_response({"erro": str(exc)}, 400)
     except Exception as exc:
+        db.session.rollback()
         app.logger.exception("Erro ao calcular cashback: %s", exc)
         return api_response({"erro": "Erro interno"}, 500)
 
@@ -207,7 +225,10 @@ def api_historico():
 @app.route("/api/simular", methods=["POST"])
 def api_simular():
     try:
-        data = request.get_json(silent=True) or {}
+        raw = request.get_data(cache=True)
+        data = request.get_json(silent=True) if raw else {}
+        if not isinstance(data, dict):
+            return api_response({"erro": "Envie um JSON valido"}, 400)
         cenarios = data.get("cenarios", DEFAULT_SCENARIOS)
 
         if not isinstance(cenarios, list) or len(cenarios) == 0:
@@ -236,6 +257,8 @@ def api_simular():
             "maior_cashback": maior_cashback,
             "cenarios": resultados,
         })
+    except RequestEntityTooLarge:
+        raise
     except ValueError as exc:
         return api_response({"erro": str(exc)}, 400)
     except Exception as exc:
@@ -247,40 +270,27 @@ def api_simular():
 def api_relatorio():
     ip = get_request_ip()
 
-    total_consultas = (
-        db.session.query(db.func.count(Consulta.id))
-        .filter_by(ip=ip)
-        .scalar()
-        or 0
-    )
-    total_cashback_raw = (
-        db.session.query(db.func.sum(Consulta.cashback))
-        .filter_by(ip=ip)
-        .scalar()
-    )
-    total_valor_final_raw = (
-        db.session.query(db.func.sum(Consulta.valor_final))
-        .filter_by(ip=ip)
-        .scalar()
-    )
-    ticket_medio_raw = (
-        db.session.query(db.func.avg(Consulta.valor_final))
-        .filter_by(ip=ip)
-        .scalar()
-    )
-
-    total_cashback = Decimal(str(total_cashback_raw or 0))
-    total_valor_final = Decimal(str(total_valor_final_raw or 0))
-    ticket_medio = Decimal(str(ticket_medio_raw or 0))
-
-    por_tipo = {"NORMAL": 0, "VIP": 0}
-    for tipo_cliente, quantidade in (
-        db.session.query(Consulta.tipo_cliente, db.func.count(Consulta.id))
+    groups = (
+        db.session.query(
+            Consulta.tipo_cliente,
+            db.func.count(Consulta.id),
+            db.func.sum(Consulta.cashback),
+            db.func.sum(Consulta.valor_final),
+        )
         .filter_by(ip=ip)
         .group_by(Consulta.tipo_cliente)
         .all()
-    ):
-        por_tipo[tipo_cliente] = quantidade
+    )
+    por_tipo = {"NORMAL": 0, "VIP": 0}
+    total_consultas = 0
+    total_cashback = Decimal(0)
+    total_valor_final = Decimal(0)
+    for tipo, quantidade, cashback, valor_final in groups:
+        por_tipo[tipo] = quantidade
+        total_consultas += quantidade
+        total_cashback += cashback
+        total_valor_final += valor_final
+    ticket_medio = total_valor_final / total_consultas if total_consultas else Decimal(0)
 
     return api_response({
         "total_consultas": total_consultas,

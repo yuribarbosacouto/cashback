@@ -76,6 +76,10 @@ http://127.0.0.1:5000
 
 Para rodar com banco externo, defina `DATABASE_URL` com Postgres ou MySQL. Os testes automatizados atuais usam SQLite em memória.
 
+Por padrão, o histórico usa o IP da conexão e ignora `X-Forwarded-For`. Em produção atrás de um proxy reverso confiável, defina `TRUSTED_PROXY_HOPS` com o número de proxies confiáveis que atualizam esse cabeçalho e restrinja o acesso direto ao servidor da aplicação. Clientes atrás do mesmo IP compartilham o histórico.
+
+A API aceita corpos de até 32 KiB. `POST /api/simular` aceita corpo vazio ou um objeto JSON.
+
 ## Qualidade
 
 ```powershell

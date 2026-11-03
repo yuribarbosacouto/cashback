@@ -105,6 +105,34 @@ class CashbackTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.get_json()["erro"], "Envie no máximo 12 cenários")
 
+    def test_proxy_header_nao_permite_ler_historico_de_outro_ip(self):
+        self.client.post(
+            "/api/calcular", json={"tipo_cliente": "VIP", "valor": 600},
+            environ_overrides={"REMOTE_ADDR": "192.0.2.1"},
+        )
+        for endpoint in ("/api/historico", "/api/relatorio"):
+            response = self.client.get(
+                endpoint, headers={"X-Forwarded-For": "192.0.2.1"},
+                environ_overrides={"REMOTE_ADDR": "192.0.2.2"},
+            )
+            self.assertEqual(response.status_code, 200)
+            result = response.get_json()
+            self.assertEqual(result if endpoint.endswith("historico") else result["total_consultas"],
+                             [] if endpoint.endswith("historico") else 0)
+
+    def test_simulacao_rejeita_json_invalido_e_aceita_corpo_vazio(self):
+        self.assertEqual(self.client.post("/api/simular").status_code, 200)
+        for raw in ("[1]", "[]", "null", "false", "0", "{"):
+            with self.subTest(raw=raw):
+                response = self.client.post("/api/simular", data=raw, content_type="application/json")
+                self.assertEqual(response.status_code, 400)
+
+    def test_limite_do_corpo_nas_rotas_post(self):
+        for endpoint in ("/api/calcular", "/api/simular"):
+            response = self.client.post(endpoint, json={"valor": "0" * 33000})
+            self.assertEqual(response.status_code, 413)
+            self.assertIn("erro", response.get_json())
+
     def test_api_relatorio_resume_consultas_do_ip(self):
         self.client.post(
             "/api/calcular",
